@@ -5,8 +5,7 @@ import lombok.Getter;
 @Getter
 public enum TokenType {
 
-//    Access("access", 1000 * 60 * 60), // 1 hour
-    Access("access", 500), // 1 hour
+    Access("access", 1000 * 60 * 60), // 1 hour
     Refresh("refresh", 1000 * 60 * 60 * 6) // 6 hour
     ;
 
