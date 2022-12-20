@@ -21,12 +21,27 @@ public class TokenController {
     @PostMapping(ApiPath.Token.getToken)
     public ResponseEntity<Token> getToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
 
-        String data[] = authorization.split(" "); // basic
+        String data[] = authorization.split(" "); // Basic
+        if (!data[0].equals("Basic")) {
+            throw new Exception("invalid authorization type (type=" + data[0] + ")");
+        }
 
         BasicToken basicToken = BasicToken.of(data[1]);
-        Token token = null;
+        Token token = authService.allocateToken(basicToken.getId(), basicToken.getPassword());
 
-        token = authService.allocateToken(basicToken.getId(), basicToken.getPassword());
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping(ApiPath.Token.refreshToken)
+    public ResponseEntity<Token> refreshToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
+
+        String data[] = authorization.split(" "); // Bearer
+        if (!data[0].equals("Bearer")) {
+            throw new Exception("invalid authorization type (type=" + data[0] + ")");
+        }
+
+        String refreshToken = data[1];
+        Token token = authService.refreshToken(refreshToken);
 
         return ResponseEntity.ok(token);
     }
@@ -35,6 +50,9 @@ public class TokenController {
     public ResponseEntity<Void> verify(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
 
         String data[] = authorization.split(" "); // Bearer
+        if (!data[0].equals("Bearer")) {
+            throw new Exception("invalid authorization type (type=" + data[0] + ")");
+        }
 
         boolean result = false;
 
@@ -44,7 +62,7 @@ public class TokenController {
             throw new Exception("expired token");
         }
 
-        if( !result ) {
+        if (!result) {
             throw new Exception("invalid token");
         }
 

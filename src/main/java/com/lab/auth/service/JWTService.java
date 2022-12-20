@@ -107,4 +107,26 @@ public class JWTService {
         JSONObject result = new JSONObject(payload);
         return result;
     }
+
+    public Token refreshToken( String jwt) throws Exception {
+        // valid refreshToken
+        Claims claims = extractClaims( jwt );
+        String tokenType = (String)claims.get(CLAIM_TOKEN_TYPE);
+        if( !tokenType.equals(TokenType.Refresh.getCode())) {
+            throw new Exception("invalid token type (tokenType=" + tokenType + ")");
+        }
+
+        // check userInfo
+        String userId = claims.getSubject();
+        User user = userService.findUser(userId);
+        if( user == null ) {
+            throw new Exception("not found user (userId=" + userId + ")");
+        }
+
+        //TODO remove old token (Access, Refresh)
+
+        // create token
+        Token token = allocateToken(user.getId());
+        return token;
+    }
 }

@@ -1,6 +1,5 @@
 package com.lab.auth.service;
 
-import com.lab.auth.domain.token.TokenType;
 import com.lab.auth.domain.user.User;
 import com.lab.auth.domain.user.UserService;
 import com.lab.auth.model.Token;
@@ -29,6 +28,11 @@ public class AuthService {
         }
 
         return jwtService.allocateToken(userId);
+    }
+
+    public Token refreshToken(String refreshToken) throws Exception {
+
+        return jwtService.refreshToken(refreshToken);
     }
 
     public boolean verifyToken(String jwt) throws ExpiredJwtException {
