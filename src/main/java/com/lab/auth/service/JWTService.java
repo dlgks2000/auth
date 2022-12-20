@@ -1,6 +1,6 @@
 package com.lab.auth.service;
 
-import com.lab.auth.domain.token.TokenType;
+import com.lab.auth.domain.token.*;
 import com.lab.auth.domain.user.User;
 import com.lab.auth.domain.user.UserService;
 import com.lab.auth.model.Token;
@@ -23,6 +23,8 @@ public class JWTService {
     private String secret = "qwlkkdfopwmdokfmqwejtlaskdjfi";
     private final byte[] secretKey = Base64.getEncoder().encode(secret.getBytes());
 
+    private final AccessTokenRepository accessTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final UserService userService;
 
     public Token allocateToken(String userId) {
@@ -32,6 +34,18 @@ public class JWTService {
 
         String accessToken = makeJwt(userId, TokenType.Access);
         String refreshToken = makeJwt(userId, TokenType.Refresh);
+
+        accessTokenRepository.save(AccessTokenEntity.builder()
+                .id(user.getId())
+                .token(accessToken)
+                .expired(Integer.valueOf((TokenType.Access.getExpireIn() / 1000) + ""))
+                .build());
+
+        refreshTokenRepository.save(RefreshTokenEntity.builder()
+                .id(user.getId())
+                .token(refreshToken)
+                .expired(Integer.valueOf((TokenType.Refresh.getExpireIn() / 1000) + ""))
+                .build());
 
         return Token.builder()
                 .accessToken(accessToken)
@@ -54,11 +68,20 @@ public class JWTService {
             if (!tokenType.equals(TokenType.Access.getCode())) {
                 throw new Exception("invalid token type (tokenType=" + tokenType + ")");
             }
+
+            AccessTokenEntity accessTokenEntity = accessTokenRepository.findById(claims.getSubject()).orElseThrow( ()->
+                    new Exception("token not found")
+            );
+
+            if( ! accessTokenEntity.getToken().equals(jwt) ) {
+                throw new Exception("invalid token");
+            }
+
         } catch (ExpiredJwtException e) {
             throw e;
         } catch (RuntimeException e) {
             return false;
-        } catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
 
@@ -108,25 +131,32 @@ public class JWTService {
         return result;
     }
 
-    public Token refreshToken( String jwt) throws Exception {
+    public Token refreshToken(String jwt) throws Exception {
         // valid refreshToken
-        Claims claims = extractClaims( jwt );
-        String tokenType = (String)claims.get(CLAIM_TOKEN_TYPE);
-        if( !tokenType.equals(TokenType.Refresh.getCode())) {
+        Claims claims = extractClaims(jwt);
+        String tokenType = (String) claims.get(CLAIM_TOKEN_TYPE);
+        if (!tokenType.equals(TokenType.Refresh.getCode())) {
             throw new Exception("invalid token type (tokenType=" + tokenType + ")");
         }
 
         // check userInfo
         String userId = claims.getSubject();
         User user = userService.findUser(userId);
-        if( user == null ) {
+        if (user == null) {
             throw new Exception("not found user (userId=" + userId + ")");
         }
 
-        //TODO remove old token (Access, Refresh)
+        // check refreshToken
+        RefreshTokenEntity refreshTokenEntity = refreshTokenRepository.findById(userId).orElseThrow(()->
+                new Exception("token not found"));
 
-        // create token
+        if( !refreshTokenEntity.getToken().equals(jwt)) {
+            throw new Exception("invalid token");
+        }
+
+        // create or update token
         Token token = allocateToken(user.getId());
+
         return token;
     }
 }

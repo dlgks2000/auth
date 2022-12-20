@@ -5,6 +5,7 @@ import com.lab.auth.model.Token;
 import com.lab.auth.service.AuthService;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +20,9 @@ public class TokenController {
     private final AuthService authService;
 
     @PostMapping(ApiPath.Token.getToken)
-    public ResponseEntity<Token> getToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
+    public ResponseEntity<Token> getToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) @NotNull String authorization) throws Exception {
 
-        String data[] = authorization.split(" "); // Basic
+        String[] data = authorization.split(" "); // Basic
         if (!data[0].equals("Basic")) {
             throw new Exception("invalid authorization type (type=" + data[0] + ")");
         }
@@ -33,9 +34,9 @@ public class TokenController {
     }
 
     @PostMapping(ApiPath.Token.refreshToken)
-    public ResponseEntity<Token> refreshToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
+    public ResponseEntity<Token> refreshToken(@RequestHeader(value = HttpHeaders.AUTHORIZATION) @NotNull String authorization) throws Exception {
 
-        String data[] = authorization.split(" "); // Bearer
+        String[] data = authorization.split(" "); // Bearer
         if (!data[0].equals("Bearer")) {
             throw new Exception("invalid authorization type (type=" + data[0] + ")");
         }
@@ -47,9 +48,9 @@ public class TokenController {
     }
 
     @GetMapping(ApiPath.Token.verify)
-    public ResponseEntity<Void> verify(@RequestHeader(value = HttpHeaders.AUTHORIZATION) String authorization) throws Exception {
+    public ResponseEntity<Void> verify(@RequestHeader(value = HttpHeaders.AUTHORIZATION) @NotNull String authorization) throws Exception {
 
-        String data[] = authorization.split(" "); // Bearer
+        String[] data = authorization.split(" "); // Bearer
         if (!data[0].equals("Bearer")) {
             throw new Exception("invalid authorization type (type=" + data[0] + ")");
         }

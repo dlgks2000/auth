@@ -10,7 +10,7 @@ public enum TokenType {
     ;
 
     private String code;
-    private Long expireIn;
+    private Long expireIn;  // milliseconds
 
     TokenType(String code, long expireIn) {
         this.code = code;
